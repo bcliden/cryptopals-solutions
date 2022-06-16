@@ -34,33 +34,26 @@ mod tests {
     fn should_do_pset1_challenge3() -> TestResult {
         // help from: https://crypto.stackexchange.com/a/30259
         let start = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-        let start_bytes = hex::decode(start)?;
+        let ans = manipulate::guess_xor_message_one_char(start).unwrap();
+        assert_eq!(ans, String::from("Cooking MC's like a pound of bacon"));
+        Ok(())
+    }
 
-        let mut key_byte: u8;
+    #[test]
+    fn should_do_pset1_challenge4() -> TestResult {
+        // detect single character XOR!
 
-        let mut scores = vec![];
+        let text = include_str!("../files/pset1challenge4.txt");
+        let strings: Vec<String> = text
+            .lines()
+            .map(|s| {
+                manipulate::guess_xor_message_one_char(s).expect("Something happened when XORing")
+            })
+            // .map(|s| s.trim().to_string())
+            .collect();
 
-        for c in 0..=255 {
-            key_byte = c as u8;
-
-            let msg_bytes: Vec<u8> = manipulate::xor_bytes_with_char(&start_bytes, key_byte);
-            let msg = String::from_utf8_lossy(&msg_bytes);
-
-            // let score = analysis::english_text_score(&msg);
-            let score = analysis::get_chi2_english(&msg);
-
-            scores.push((score, msg.into_owned()));
-        }
-
-        // for "closeness score" use:
-        // scores.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
-        // for chi2 use:
-        scores.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
-
-        for entry in scores.iter().take(10) {
-            println!("{:?}", entry);
-        }
-
+        let best_string = analysis::pick_best_english_string(&strings);
+        assert_eq!(best_string, "Now that the party is jumping\n");
         Ok(())
     }
 }

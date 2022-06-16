@@ -21,10 +21,6 @@ pub fn decode_using_alphabet<T: Alphabet>(
         .collect::<Vec<char>>()
         .chunks(4)
         .map(|chunk| original(alphabet, chunk))
-        .map(|v| {
-            println!("One chunk is: {:#?}", v);
-            v
-        })
         .flat_map(stitch)
         .collect();
 
@@ -73,21 +69,7 @@ fn stitch(bytes: Vec<u8>) -> Vec<u8> {
         _ => unreachable!(),
     };
 
-    /*
-        Remove any 0 bytes at the END
-    */
-
-    // out.into_iter().filter(|&x| x > 0).collect()
-    // dbg!(length);
     let mut v: Vec<u8> = out.into_iter().collect();
-
-    println!("decoded chunk, pre drain: {:?}", v);
-
-    // v.iter()
-    //     .enumerate()
-    //     .rev()
-    //     .take_while(|(_, &el)| el != 0x00)
-    //     .for_each(|(idx, el)| { v.remove(idx); });
     let matched_el = v
         .iter()
         .enumerate()
@@ -95,7 +77,6 @@ fn stitch(bytes: Vec<u8>) -> Vec<u8> {
         .find(|(_, &el)| el != 0x00)
         .map(|(idx, _)| idx + 1)
         .unwrap_or_else(|| v.len());
-    println!("Draining from... {:?}", matched_el..);
     v.drain(matched_el..);
     v
 }

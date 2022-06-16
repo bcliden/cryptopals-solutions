@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 const ASCII_UPPERCASE: usize = 65;
 const ASCII_LOWERCASE: usize = 97;
 // via https://www3.nd.edu/~busiforc/handouts/cryptography/letterfrequencies.html
@@ -57,21 +59,31 @@ pub fn get_chi2_english(string: &str) -> f64 {
     chi2
 }
 
+/// Pick best string among the slice passed in.
+pub fn pick_best_english_string<T: AsRef<str> + Display>(strings: &[T]) -> &str {
+    // let mut best_score = f64::MAX;
+    let mut best_score = f64::MIN;
+    let mut message: &str = "";
+
+    // let mut answers = vec![];
+    for s in strings {
+        // let score = get_chi2_english(s.as_ref());
+        let score = english_text_score(s.as_ref());
+
+        // answers.push((s.as_ref(), score));
+        // if score < best_score {
+        if score > best_score {
+            best_score = score;
+            message = s.as_ref();
+        }
+    }
+
+    message
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn english_closeness_works() {
-        let good_str = "Cooking MC's like a pound of bacon";
-        let bad_str = "Ieeacdm*GI-y*fcao*k*zeku";
-
-        let bad_str_score = english_text_score(bad_str);
-        let good_str_score = english_text_score(good_str);
-
-        // a higher score is more like english
-        assert!(good_str_score > bad_str_score);
-    }
 
     #[test]
     fn chi2_works() {
@@ -83,5 +95,27 @@ mod tests {
 
         // a LOWER chi2 is more like english
         assert!(good_str_chi2 < bad_str_chi2);
+    }
+
+    #[test]
+    fn should_pick_best_english_string() {
+        let sentences = vec![
+            "Cooking MC's like a pound of bacon",
+            "Ieeacdm*GI-y*fcao*k*zeku",
+        ];
+        let best = pick_best_english_string(&sentences);
+        assert_eq!(best, String::from("Cooking MC's like a pound of bacon"))
+    }
+
+    #[test]
+    fn english_closeness_works() {
+        let good_str = "Cooking MC's like a pound of bacon";
+        let bad_str = "Ieeacdm*GI-y*fcao*k*zeku";
+
+        let bad_str_score = english_text_score(bad_str);
+        let good_str_score = english_text_score(good_str);
+
+        // a higher score is more like english
+        assert!(good_str_score > bad_str_score);
     }
 }
