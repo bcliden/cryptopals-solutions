@@ -10,7 +10,7 @@ pub fn decode(data: &str) -> Result<Vec<u8>, io::Error> {
 
 fn decode_using_alphabet<T: Alphabet>(alphabet: &T, data: &str) -> Result<Vec<u8>, io::Error> {
     if data.len() % 2 != 0 {
-        return Err(io::Error::from(io::ErrorKind::InvalidInput))
+        return Err(io::Error::from(io::ErrorKind::InvalidInput));
     }
 
     data.chars()
@@ -24,10 +24,7 @@ fn decode_using_alphabet<T: Alphabet>(alphabet: &T, data: &str) -> Result<Vec<u8
             };
 
             let tuple = match chars {
-                [first, second] => (
-                    get_or_err(first)?, 
-                    get_or_err(second)?
-                ),
+                [first, second] => (get_or_err(first)?, get_or_err(second)?),
                 _ => unreachable!(),
             };
 

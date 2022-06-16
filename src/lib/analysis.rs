@@ -29,7 +29,6 @@ pub fn english_text_score(string: &str) -> f64 {
     score
 }
 
-
 /// The SMALLER the number, the more it resembles english.
 pub fn get_chi2_english(string: &str) -> f64 {
     // help from: https://crypto.stackexchange.com/a/30259
@@ -67,7 +66,7 @@ mod tests {
         let good_str = "Cooking MC's like a pound of bacon";
         let bad_str = "Ieeacdm*GI-y*fcao*k*zeku";
 
-        let bad_str_score =  english_text_score(bad_str);
+        let bad_str_score = english_text_score(bad_str);
         let good_str_score = english_text_score(good_str);
 
         // a higher score is more like english

@@ -88,7 +88,13 @@ fn stitch(bytes: Vec<u8>) -> Vec<u8> {
     //     .rev()
     //     .take_while(|(_, &el)| el != 0x00)
     //     .for_each(|(idx, el)| { v.remove(idx); });
-    let matched_el = v.iter().enumerate().rev().find(|(_, &el)| el != 0x00).map(|(idx, _)| idx + 1).unwrap_or_else(|| v.len());
+    let matched_el = v
+        .iter()
+        .enumerate()
+        .rev()
+        .find(|(_, &el)| el != 0x00)
+        .map(|(idx, _)| idx + 1)
+        .unwrap_or_else(|| v.len());
     println!("Draining from... {:?}", matched_el..);
     v.drain(matched_el..);
     v
