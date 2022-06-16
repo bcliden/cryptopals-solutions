@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use rayon::prelude::*;
+
 const ASCII_UPPERCASE: usize = 65;
 const ASCII_LOWERCASE: usize = 97;
 // via https://www3.nd.edu/~busiforc/handouts/cryptography/letterfrequencies.html
@@ -23,12 +25,10 @@ pub fn english_text_score(string: &str) -> f64 {
         _ => {} // not ascii perhaps?
     });
 
-    let mut score = 0.0;
-    for i in 0..27 {
-        score += (counts[i]) * ENGLISH_FREQ[i];
-    }
-
-    score
+    (0..27)
+        .into_par_iter()
+        .map(|i: usize| counts[i] * ENGLISH_FREQ[i])
+        .sum()
 }
 
 /// The SMALLER the number, the more it resembles english.
@@ -46,32 +46,27 @@ pub fn get_chi2_english(string: &str) -> f64 {
         _ => ignored_chars += 1, // not ascii perhaps?
     });
 
-    let mut chi2: f64 = 0.0;
     let length = string.len() - ignored_chars;
 
-    for i in 0..27 {
-        let observed = counts[i];
-        let expected = length as f64 * ENGLISH_FREQ[i];
-        let difference = observed - expected;
-        chi2 += (difference * difference) / expected;
-    }
-
-    chi2
+    (0..27_usize)
+        .into_par_iter()
+        .map(|i: usize| {
+            let observed = counts[i];
+            let expected = length as f64 * ENGLISH_FREQ[i];
+            let difference = observed - expected;
+            (difference * difference) / expected
+        })
+        .sum()
 }
 
 /// Pick best string among the slice passed in.
 pub fn pick_best_english_string<T: AsRef<str> + Display>(strings: &[T]) -> &str {
-    // let mut best_score = f64::MAX;
     let mut best_score = f64::MIN;
     let mut message: &str = "";
 
-    // let mut answers = vec![];
     for s in strings {
-        // let score = get_chi2_english(s.as_ref());
         let score = english_text_score(s.as_ref());
 
-        // answers.push((s.as_ref(), score));
-        // if score < best_score {
         if score > best_score {
             best_score = score;
             message = s.as_ref();

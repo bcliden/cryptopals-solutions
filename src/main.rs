@@ -8,6 +8,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 mod tests {
     use crate::lib::conversion::{base64, hex};
     use crate::lib::{analysis, manipulate};
+    use rayon::prelude::*;
 
     type TestResult = Result<(), Box<dyn std::error::Error>>;
 
@@ -45,11 +46,10 @@ mod tests {
 
         let text = include_str!("../files/pset1challenge4.txt");
         let strings: Vec<String> = text
-            .lines()
+            .par_lines()
             .map(|s| {
                 manipulate::guess_xor_message_one_char(s).expect("Something happened when XORing")
             })
-            // .map(|s| s.trim().to_string())
             .collect();
 
         let best_string = analysis::pick_best_english_string(&strings);
