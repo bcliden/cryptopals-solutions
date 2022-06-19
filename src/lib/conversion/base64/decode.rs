@@ -16,13 +16,26 @@ pub fn decode_using_alphabet<T: Alphabet>(
         return Err(io::Error::from(io::ErrorKind::InvalidInput));
     }
 
-    let result = data
+    let mut result: Vec<_> = data
         .chars()
         .collect::<Vec<char>>()
         .chunks(4)
         .map(|chunk| original(alphabet, chunk))
         .flat_map(stitch)
         .collect();
+
+    /*
+        Only strip ending zeroes AFTER all chunks are together.
+    */
+
+    let final_zeroes_index = result
+        .iter()
+        .enumerate()
+        .rev()
+        .find(|(_, &el)| el != 0x0000)
+        .map(|(idx, _)| idx + 1)
+        .unwrap_or_else(|| result.len());
+    result.drain(final_zeroes_index..);
 
     Ok(result)
 }
@@ -31,9 +44,9 @@ fn original<T: Alphabet>(alphabet: &T, chunk: &[char]) -> Vec<u8> {
     chunk
         .iter()
         .filter(|&&character| character != alphabet.get_padding_char())
-        .map(|character| {
+        .map(|&character| {
             alphabet
-                .get_index_for_char(*character)
+                .get_index_for_char(character)
                 .expect("Unable to find character in alphabet")
         })
         .collect()
@@ -69,20 +82,13 @@ fn stitch(bytes: Vec<u8>) -> Vec<u8> {
         _ => unreachable!(),
     };
 
-    let mut v: Vec<u8> = out.into_iter().collect();
-    let matched_el = v
-        .iter()
-        .enumerate()
-        .rev()
-        .find(|(_, &el)| el != 0x00)
-        .map(|(idx, _)| idx + 1)
-        .unwrap_or_else(|| v.len());
-    v.drain(matched_el..);
-    v
+    out.into_iter().collect()
 }
 
 #[cfg(test)]
 mod tests {
+    use itertools::Itertools;
+
     use super::*;
     use std::io;
 
@@ -124,6 +130,22 @@ mod tests {
     #[test]
     fn should_handle_zeroes_midstring() {
         let encoded = String::from("0A0=");
-        assert_eq!(decode(&encoded).unwrap(), vec![0xd0, 0x0d]);
+        let bytes = decode(&encoded).unwrap();
+        assert_eq!(bytes, vec![0xd0, 0x0d]);
+        assert_eq!(bytes, externalbase64::decode(encoded).unwrap());
+    }
+
+    #[test]
+    fn should_match_decode_from_rust_base64() {
+        let input = include_str!("../../../../files/pset1challenge6.txt");
+        let cleaned_input: String = input.chars().filter(|c| !c.is_ascii_whitespace()).collect();
+
+        let our_bytes = decode(&cleaned_input).unwrap();
+        let their_bytes = externalbase64::decode(cleaned_input).unwrap();
+
+        let test_ours = our_bytes.iter().collect_vec();
+        let test_theirs = their_bytes.iter().collect_vec();
+
+        assert_eq!(test_ours, test_theirs);
     }
 }

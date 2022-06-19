@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use bitvec::prelude::*;
 use rayon::prelude::*;
 
 const ASCII_UPPERCASE: usize = 65;
@@ -76,6 +77,24 @@ pub fn pick_best_english_string<T: AsRef<str> + Display>(strings: &[T]) -> &str 
     message
 }
 
+pub fn get_hamming_distance(
+    base: &[u8],
+    comparison: &[u8],
+) -> Result<usize, Box<dyn std::error::Error>> {
+    if base.len() != comparison.len() {
+        return Err(std::io::Error::from(std::io::ErrorKind::InvalidInput).into());
+    }
+
+    let sum = std::iter::zip(base.iter(), comparison.iter())
+        .map(|(b1, b2)| {
+            let xor = b1 ^ b2;
+            BitArray::<u8, Lsb0>::from(xor).iter_ones().len()
+        })
+        .sum();
+
+    Ok(sum)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -112,5 +131,14 @@ mod tests {
 
         // a higher score is more like english
         assert!(good_str_score > bad_str_score);
+    }
+
+    #[test]
+    fn should_get_hamming_distance() {
+        let s1 = "this is a test";
+        let s2 = "wokka wokka!!!";
+
+        let result = get_hamming_distance(s1.as_bytes(), s2.as_bytes());
+        assert_eq!(37, result.unwrap());
     }
 }
